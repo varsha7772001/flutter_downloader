@@ -339,7 +339,6 @@ public class DownloadWorker extends Worker implements MethodChannel.MethodCallHa
                     }
                 }
                 saveFilePath = savedDir + File.separator + filename;
-
                 log("fileName = " + filename);
 
                 taskDao.updateTask(getId().toString(), filename, contentType);
@@ -350,17 +349,20 @@ public class DownloadWorker extends Worker implements MethodChannel.MethodCallHa
                 // opens an output stream to save into file
                 Uri uriApi29 = null;
                 File fileApi21 = null;
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    uriApi29 = addFileToDownloadsApi29(filename);
-                    if (isResume) {
-                        outputStream = context.getContentResolver().openOutputStream(uriApi29, "wa");
-                    } else {
-                        outputStream = context.getContentResolver().openOutputStream(uriApi29, "w");
-                    }
-                } else {
-                    fileApi21 = addFileToDownloadsApi21(filename);
-                    outputStream = new FileOutputStream(fileApi21, isResume);
-                }
+//                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+//                    uriApi29 = addFileToDownloadsApi29(filename);
+//                    if (isResume) {
+//                        outputStream = context.getContentResolver().openOutputStream(uriApi29, "wa");
+//                    } else {
+//                        outputStream = context.getContentResolver().openOutputStream(uriApi29, "w");
+//                    }
+//                } else {
+//                    fileApi21 = addFileToDownloadsApi21(filename);
+//                    outputStream = new FileOutputStream(fileApi21, isResume);
+//                }
+                fileApi21 = addFileToDownloadsApi21(savedDir,filename);
+                android.util.Log.d(TAG, "downloadFile: fileApi21 path =>"+fileApi21.getAbsolutePath());
+                outputStream = new FileOutputStream(fileApi21, isResume);
 
                 long count = downloadedBytes;
                 int bytesRead = -1;
@@ -390,37 +392,37 @@ public class DownloadWorker extends Worker implements MethodChannel.MethodCallHa
                 PendingIntent pendingIntent = null;
                 if (status == DownloadStatus.COMPLETE) {
 
-                    String fileSavedPath = null;
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                        String savedPath = getMediaStoreEntryPathApi29(uriApi29);
-                        log("File downloaded (" + savedPath + ")");
-                        if (savedPath != null) {
-                            scanFilePath(savedPath, contentType, uriResponse -> {
-                                log("MediaStore updated (" + uriResponse + ")");
-                            });
-                        }
-                        fileSavedPath = savedPath;
-                    } else {
-                        if (fileApi21 != null) {
-                            log("File downloaded (" + fileApi21.getPath() + ")");
-                            scanFilePath(fileApi21.getPath(), contentType, uriResponse -> {
-                                log("MediaStore updated (" + uriResponse + ")");
-                            });
-                            fileSavedPath = fileApi21.getPath();
-                        }
-                    }
+//                    String fileSavedPath = null;
+//                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+//                        String savedPath = getMediaStoreEntryPathApi29(uriApi29);
+//                        log("File downloaded (" + savedPath + ")");
+//                        if (savedPath != null) {
+//                            scanFilePath(savedPath, contentType, uriResponse -> {
+//                                log("MediaStore updated (" + uriResponse + ")");
+//                            });
+//                        }
+//                        fileSavedPath = savedPath;
+//                    } else {
+//                        if (fileApi21 != null) {
+//                            log("File downloaded (" + fileApi21.getPath() + ")");
+//                            scanFilePath(fileApi21.getPath(), contentType, uriResponse -> {
+//                                log("MediaStore updated (" + uriResponse + ")");
+//                            });
+//                            fileSavedPath = fileApi21.getPath();
+//                        }
+//                    }
 
-                    if (clickToOpenDownloadedFile) {
-                        if(android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.Q && storage != PackageManager.PERMISSION_GRANTED)
-                            return;
-                        Intent intent = IntentUtils.validatedFileIntent(getApplicationContext(), fileSavedPath, contentType);
-                        if (intent != null) {
-                            log("Setting an intent to open the file " + fileSavedPath);
-                            pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
-                        } else {
-                            log("There's no application that can open the file " + fileSavedPath);
-                        }
-                    }
+//                    if (clickToOpenDownloadedFile) {
+//                        if(android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.Q && storage != PackageManager.PERMISSION_GRANTED)
+//                            return;
+//                        Intent intent = IntentUtils.validatedFileIntent(getApplicationContext(), fileSavedPath, contentType);
+//                        if (intent != null) {
+//                            log("Setting an intent to open the file " + fileSavedPath);
+//                            pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
+//                        } else {
+//                            log("There's no application that can open the file " + fileSavedPath);
+//                        }
+//                    }
                 }
                 updateNotification(context, filename, status, progress, pendingIntent, true);
                 taskDao.updateTask(getId().toString(), status, progress);
@@ -461,19 +463,22 @@ public class DownloadWorker extends Worker implements MethodChannel.MethodCallHa
     /**
      * Create a file inside the Download folder using java.io API
      */
-    private File addFileToDownloadsApi21(String filename) {
-        File downloadsFolder = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-        File newFile = new File(downloadsFolder, filename);
-        try {
-            boolean rs = newFile.createNewFile();
-            if(rs) {
-                return newFile;
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            log("Create a file using java.io API failed ");
-        }
-        return null;
+    private File addFileToDownloadsApi21(String savedDir,String filename) {
+//        File downloadsFolder = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+//        File newFile = new File(downloadsFolder, filename);
+//            File newFile = new File(getApplicationContext().getFilesDir(), filename);
+            File newFile = new File(savedDir, filename);
+            return newFile;
+//        try {
+//            boolean rs = newFile.createNewFile();
+//            if(rs) {
+//                return newFile;
+//            }
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//            log("Create a file using java.io API failed ");
+//        }
+//        return null;
     }
 
     /**
