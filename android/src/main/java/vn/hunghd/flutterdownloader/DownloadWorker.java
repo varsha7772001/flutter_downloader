@@ -589,8 +589,7 @@ public class DownloadWorker extends Worker implements MethodChannel.MethodCallHa
         if (showNotification) {
             // Create the notification
             NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID).
-                    //setContentTitle(notificationTitle == null ? title : notificationTitle)
-                    setContentTitle("Downlaoding")
+                    setContentTitle(notificationTitle == null ? title : notificationTitle)
                     .setContentIntent(intent)
                     .setOnlyAlertOnce(true)
                     .setAutoCancel(true)
